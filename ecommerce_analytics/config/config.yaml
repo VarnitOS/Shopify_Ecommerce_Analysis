@@ -1,0 +1,87 @@
+# Application Settings
+app:
+  name: E-commerce Analytics Platform
+  version: 0.1.0
+  environment: ${ENVIRONMENT:development}
+  debug: true
+
+# API Settings
+api:
+  host: 0.0.0.0
+  port: 8000
+  workers: 4
+  timeout: 60
+
+# Database Settings
+database:
+  url: ${DATABASE_URL:postgresql://postgres:postgres@localhost:5432/ecommerce}
+  pool_size: 10
+  max_overflow: 20
+  timeout: 30
+
+# Shopify API Settings
+shopify:
+  api_key: ${SHOPIFY_API_KEY:}
+  api_secret: ${SHOPIFY_API_SECRET:}
+  shop_name: ${SHOPIFY_SHOP_NAME:}
+  api_version: "2023-07"
+  scopes: "read_products,read_orders,read_customers"
+
+# ETL Settings
+etl:
+  batch_size: 1000
+  parallel_jobs: 4
+  airflow_scheduler: "0 0 * * *"  # Daily at midnight
+  backfill_days: 30
+
+# Model Settings
+model:
+  recommendation:
+    model_type: "matrix_factorization"
+    embedding_dim: 128
+    learning_rate: 0.01
+    batch_size: 64
+    num_epochs: 20
+  
+  forecasting:
+    model_type: "prophet"
+    seasonality_mode: "multiplicative"
+    changepoint_prior_scale: 0.05
+
+  nlp:
+    pretrained_model: "distilbert-base-uncased"
+    max_length: 128
+    batch_size: 32
+    learning_rate: 2e-5
+
+# MLOps Settings
+mlops:
+  mlflow:
+    tracking_uri: ${MLFLOW_TRACKING_URI:http://localhost:5000}
+    experiment_name: "ecommerce-analytics"
+  
+  monitoring:
+    metrics_interval: 60  # seconds
+    log_level: "INFO"
+    alert_threshold: 0.1
+
+# Storage Settings
+storage:
+  s3:
+    endpoint: ${S3_ENDPOINT:http://localhost:9000}
+    bucket: ${S3_BUCKET:ecommerce-data}
+    access_key: ${AWS_ACCESS_KEY_ID:}
+    secret_key: ${AWS_SECRET_ACCESS_KEY:}
+
+# Feature Store Settings
+feature_store:
+  registry: ${FEAST_REGISTRY:s3://ecommerce-data/feature-store/registry.db}
+  online_store: "redis"
+  offline_store: "file"
+
+# Logging Settings
+logging:
+  level: ${LOG_LEVEL:INFO}
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/app.log"
+  rotation: "1 day" 

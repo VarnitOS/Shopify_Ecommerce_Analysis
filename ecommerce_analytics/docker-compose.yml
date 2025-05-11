@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/ecommerce
+    depends_on:
+      - db
+      - redis
+
+  streamlit:
+    build: .
+    command: streamlit run src/visualization/dashboard.py
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    environment:
+      - ENVIRONMENT=development
+    depends_on:
+      - api
+
+  mlflow:
+    build: .
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri postgresql://postgres:postgres@db:5432/mlflow --default-artifact-root s3://mlflow-artifacts
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    depends_on:
+      - db
+
+  airflow:
+    image: apache/airflow:2.6.3
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src/etl/dags:/opt/airflow/dags
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql://postgres:postgres@db:5432/airflow
+    depends_on:
+      - db
+    
+  db:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_MULTIPLE_DATABASES=ecommerce,mlflow,airflow
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data: 
